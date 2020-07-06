@@ -1,18 +1,20 @@
 import java.io.*;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 import java.lang.Math;
 
 public class Solver {
-    static int maxValue = 0;
     static int items;
     static int capacity;
     static int[] values;
     static int[] weights;
+
     static int[] taken;
     static int[] curTaken;
+    static int[] maxTaken;
+
+    static int maxValue = 0;
+    static Stack<Float> boundingStack = new Stack<>();
+    static Stack<Integer> branchStack = new Stack<>();
 
     public static void main(String[] args) {
         try {
@@ -23,11 +25,10 @@ public class Solver {
     }
 
     /**
-     * Dynamic Programming
+     * Dynamic Programming, will be likely to deplete the memory
      */
     public static void solveDP() {
         int[][] dp = new int[items][capacity + 1];
-        taken = new int[items];
 
         for (int i = 0; i < items; i++) {
             for (int j = 0; j <= capacity; j++) {
@@ -56,20 +57,19 @@ public class Solver {
             }
         }
 
-        // prepare the solution in the specified output format
-        System.out.println(dp[items - 1][capacity]+" 1");
-        for(int i=0; i < items; i++){
-            System.out.print(taken[i]+" ");
-        }
-        System.out.println("");
+        maxValue = dp[items - 1][capacity];
     }
 
-    public static void solve2() {
+    /**
+     *  Solve the problem with large input size
+     */
+    public static void solveLarge() {
+        // Sort the array in descending order of value per weight
         int[][] temp = new int[items][3];
         for (int i = 0; i < items; i++) {
             temp[i][0] = values[i];
             temp[i][1] = weights[i];
-            temp[i][2] = i;
+            temp[i][2] = i; // The original index of this item
         }
         Arrays.sort(temp, new Comparator<int[]>() {
             @Override
@@ -82,33 +82,92 @@ public class Solver {
             values[i] = temp[i][0];
             weights[i] = temp[i][1];
         }
+
         curTaken = new int[items];
-        int greedySpace = capacity;
-        float bounding = 0;
+        maxTaken = new int[items];
+
+        helper(temp);
+
+        // these 2 lines use recursive version of searching
+//        float bounding = suffixBounding(0, capacity);
+//        helper(0, 0, capacity, bounding);
+
         for (int i = 0; i < items; i++) {
-            if (weights[i] <= greedySpace) {
-                greedySpace -= weights[i];
+            taken[temp[i][2]] = maxTaken[i];
+        }
+    }
+
+    /**
+     * Compute the maximum value that we can get using room space, and only items with index >= i
+     */
+    public static float suffixBounding(int i, int room) {
+        float bounding = 0;
+        while (i < items) {
+            if (weights[i] <= room) {
+                room -= weights[i];
                 bounding += values[i];
             }
             else {
-                bounding += greedySpace / (float)weights[i] * (float)values[i];
+                bounding += room / (float)weights[i] * (float)values[i];
                 break;
             }
+            i++;
         }
-        helper(0, 0, capacity, bounding);
-        int[] initTaken = new int[items];
-        for (int i = 0; i < items; i++) {
-            initTaken[temp[i][2]] = taken[i];
-        }
-
-        // prepare the solution in the specified output format
-        System.out.println(maxValue+" 1");
-        for(int i=0; i < items; i++){
-            System.out.print(initTaken[i]+" ");
-        }
-        System.out.println("");
+        return bounding;
     }
 
+    /**
+     * Iterative version of the helper function, which better saves space
+     */
+    public static void helper(int[][] temp) {
+        int value = 0;
+        int room = capacity;
+        float bounding = suffixBounding(0, capacity);
+        int state = 0; // 0 means we are going down, 1 means going up
+
+        for (int i = 0; i >= 0; ) {
+            if (state == 0 && (room < 0 || bounding <= maxValue)) {
+                i--;
+                state = 1;
+            }
+            else if (i == items) {
+                if (maxValue < value) {
+                    maxValue = value;
+                    maxTaken = curTaken.clone();
+                }
+                i--;
+                state = 1;
+            }
+            else if (state == 0){
+                branchStack.push(0); // 0 means we have considered the case where item i is chosen (left child)
+                curTaken[i] = 1;
+                value += values[i];
+                room -= weights[i];
+                i++;
+            }
+            else {
+                // pop stack and decide whether go to right child or back track
+                if (branchStack.pop() == 0) {
+                    curTaken[i] = 0;
+                    value -= values[i];
+                    room += weights[i];
+                    boundingStack.push(bounding);
+                    branchStack.push(1); // Go to right child node
+                    bounding = value + suffixBounding(i + 1, room);
+                    state = 0;
+                    i++;
+                }
+                else {
+                    bounding = boundingStack.pop();
+                    i--;
+                }
+            }
+        }
+    }
+
+    /**
+     * Recursive version of the helper function, which will cause stack overflow when input size is large
+     */
     public static void helper(int i, int value, int room, float bounding) {
         if (bounding <= maxValue) {
             return;
@@ -119,25 +178,14 @@ public class Solver {
         if (i == items) {
             if (maxValue < value) {
                 maxValue = value;
-                taken = curTaken.clone();
+                maxTaken = curTaken.clone();
             }
             return;
         }
         curTaken[i] = 1;
         helper(i + 1, value + values[i], room - weights[i], bounding);
         curTaken[i] = 0;
-        bounding = value;
-        int greedySpace = room;
-        for (int j = i + 1; j < items; j++) {
-            if (weights[j] <= greedySpace) {
-                greedySpace -= weights[j];
-                bounding += values[j];
-            }
-            else {
-                bounding += greedySpace / (float)weights[j] * (float)values[j];
-                break;
-            }
-        }
+        bounding = value + suffixBounding(i + 1, room);
         helper(i + 1, value, room, bounding);
     }
 
@@ -177,6 +225,7 @@ public class Solver {
 
         values = new int[items];
         weights = new int[items];
+        taken = new int[items];
 
         for(int i=1; i < items+1; i++){
             String line = lines.get(i);
@@ -186,6 +235,16 @@ public class Solver {
             weights[i-1] = Integer.parseInt(parts[1]);
         }
 
-        solve2();
+        solveLarge();
+
+        // the line below use dynamic programming to find the solution
+//        solveDP();
+
+        // prepare the solution in the specified output format
+        System.out.println(maxValue + " 1");
+        for(int i = 0; i < items; i++) {
+            System.out.print(taken[i] + " ");
+        }
+        System.out.println("");
     }
 }

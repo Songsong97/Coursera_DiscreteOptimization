@@ -1,12 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import sys
 import os
 from subprocess import Popen, PIPE
 
+
 def solve_it(input_data):
 
-    # Writes the inputData to a temporay file
+    # Writes the inputData to a temporary file
 
     tmp_file_name = 'tmp.data'
     tmp_file = open(tmp_file_name, 'w')
@@ -18,13 +20,11 @@ def solve_it(input_data):
     process = Popen(['java', 'Solver', '-file=' + tmp_file_name], stdout=PIPE, universal_newlines=True)
     (stdout, stderr) = process.communicate()
 
-    # removes the temporay file
+    # removes the temporary file
     os.remove(tmp_file_name)
 
     return stdout.strip()
 
-
-import sys
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

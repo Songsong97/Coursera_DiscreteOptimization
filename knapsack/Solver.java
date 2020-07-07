@@ -25,7 +25,7 @@ public class Solver {
     }
 
     /**
-     * Dynamic Programming, will be likely to deplete the memory
+     * Dynamic Programming, which is likely to deplete the memory
      */
     public static void solveDP() {
         int[][] dp = new int[items][capacity + 1];
@@ -86,7 +86,7 @@ public class Solver {
         curTaken = new int[items];
         maxTaken = new int[items];
 
-        helper(temp);
+        helper();
 
         // these 2 lines use recursive version of searching
 //        float bounding = suffixBounding(0, capacity);
@@ -117,20 +117,23 @@ public class Solver {
     }
 
     /**
-     * Iterative version of the helper function, which better saves space
+     * Iterative version of the helper method, which better saves space.
+     * This method does an exhaustive search and uses relaxation on the bounding.
+     * The bounding is the maximum value we can get using the current selection and the "value per weight" paradigm.
+     * We prune the search tree when current bounding <= max value we already got.
      */
-    public static void helper(int[][] temp) {
+    public static void helper() {
         int value = 0;
         int room = capacity;
         float bounding = suffixBounding(0, capacity);
         int state = 0; // 0 means we are going down, 1 means going up
 
         for (int i = 0; i >= 0; ) {
-            if (state == 0 && (room < 0 || bounding <= maxValue)) {
+            if (state == 0 && (room < 0 || bounding <= maxValue)) { // prune invalid or useless search tree
                 i--;
                 state = 1;
             }
-            else if (i == items) {
+            else if (i == items) { // candidate of the result
                 if (maxValue < value) {
                     maxValue = value;
                     maxTaken = curTaken.clone();
@@ -138,14 +141,14 @@ public class Solver {
                 i--;
                 state = 1;
             }
-            else if (state == 0){
+            else if (state == 0){ // come to a node from its parent
                 branchStack.push(0); // 0 means we have considered the case where item i is chosen (left child)
                 curTaken[i] = 1;
                 value += values[i];
                 room -= weights[i];
                 i++;
             }
-            else {
+            else { // come to a node from its children
                 // pop stack and decide whether go to right child or back track
                 if (branchStack.pop() == 0) {
                     curTaken[i] = 0;
@@ -166,7 +169,7 @@ public class Solver {
     }
 
     /**
-     * Recursive version of the helper function, which will cause stack overflow when input size is large
+     * Recursive version of the helper method, which will cause stack overflow when input size is large
      */
     public static void helper(int i, int value, int room, float bounding) {
         if (bounding <= maxValue) {

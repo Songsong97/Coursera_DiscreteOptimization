@@ -1,14 +1,13 @@
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.lang.Math;
 
 class Node {
-    boolean[] colorSet;
+    boolean[] colorSet; // if colorSet[c] == true, then color c is not selectable for this node
     int id;
     int color;
     int degree;
-    int occupy = 0;
+    int occupy = 0; // how many color is not selectable for this node
     Node(int size, int id, int degree) {
         colorSet = new boolean[size];
         color = -1;
@@ -16,6 +15,11 @@ class Node {
         this.degree = degree;
     }
 }
+
+/**
+ * The key idea here is to use a priority queue, where we use a heuristic strategy to determine the next node to color
+ * See comp(Node, Node) for details.
+ */
 
 class MyPriorityQueue {
     Node[] data;
@@ -154,14 +158,23 @@ public class Solver {
         }
     }
 
+    /**
+     * This method needs to search for a large space, which makes it impractical to be used.
+     * We may need a smarter bounding to prune the search tree.
+     */
     public static void solveNaive() {
         int state = 0; // 0 means we are searching down, 1 means we are back tracking
         Stack<Integer> bounding = new Stack<>();
         Stack<ArrayList<Integer>> changedStack = new Stack<>();
         bounding.push(-1);
+
+        /*
+        We have no patience for this to run forever, so we set this limitation.
+        The initial value of limit is 0, so we can at leas get one non-trivial solution.
+         */
         int limit = 0;
         int ct = 0;
-        for (int i = 0; i >= 0; ) {
+        for (int i = 0; i >= 0; ) { // the i-th node we are going to color
             ct++;
             if (limit > 0 && ct > limit) {
                 return;
@@ -190,6 +203,7 @@ public class Solver {
                         node.colorSet[j] = true;
                         node.color = j;
                         ArrayList<Integer> changed = new ArrayList<>();
+                        // Propagate the constraints to neighbors, and record this change in stack
                         for (int k = 0; k < edges.get(node.id).size(); k++) {
                             int neighbor = edges.get(node.id).get(k);
                             int indexNeighbor = queue.indexInData[neighbor];
@@ -204,7 +218,7 @@ public class Solver {
                         break;
                     }
                 }
-                if (j == i + 1) {
+                if (j == i + 1) { // back tracking
                     state = 1;
                     i--;
                     queue.insert(node);
@@ -217,6 +231,7 @@ public class Solver {
                 Node node = stack.pop();
                 bounding.pop();
                 ArrayList<Integer> restore = changedStack.pop();
+                // restore the color each neighbor can use
                 for (int restoreID : restore) {
                     queue.enableColor(restoreID, node.color);
                 }
@@ -232,6 +247,7 @@ public class Solver {
                         node.colorSet[j] = true;
                         node.color = j;
                         ArrayList<Integer> changed = new ArrayList<>();
+                        // Propagate the constraints to neighbors, and record this change in stack
                         for (int k = 0; k < edges.get(node.id).size(); k++) {
                             int neighbor = edges.get(node.id).get(k);
                             int indexNeighbor = queue.indexInData[neighbor];
@@ -270,7 +286,6 @@ public class Solver {
                 fileName = arg.substring(6);
             } 
         }
-//        fileName = "tmp.data"; // todo: to be deleted
         if(fileName == null)
             return;
         

@@ -2,56 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0e191862-3930-4c58-9fe4-a5ac47082818" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/MyPriorityQueue.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Node.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/MyPriorityQueue.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/Node.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/_coursera" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/coloring.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_1000_1" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_1000_3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_1000_5" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_1000_7" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_1000_9" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_100_1" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_100_3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_100_5" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_100_7" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_100_9" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_20_1" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_20_3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_20_5" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_20_7" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_20_9" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_250_1" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_250_3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_250_5" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_250_7" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_250_9" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_4_1" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_500_1" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_500_3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_500_5" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_500_7" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_500_9" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_50_1" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_50_3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_50_5" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_50_7" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_50_9" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_70_1" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_70_3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_70_5" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_70_7" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/data/gc_70_9" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/handout.pdf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/solver.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/solverPy.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/out/production/coloring/submit.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Solver.class" beforeDir="false" afterPath="$PROJECT_DIR$/Solver.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Solver.java" beforeDir="false" afterPath="$PROJECT_DIR$/Solver.java" afterDir="false" />
@@ -77,22 +27,22 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="java" value="4" />
+          <entry key="java" value="3" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="JAVA" value="4" />
+          <entry key="JAVA" value="3" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="java" value="7302" />
+          <entry key="java" value="3647" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="JAVA" value="7302" />
+          <entry key="JAVA" value="3647" />
         </counts>
       </usages-collector>
     </session>
@@ -102,8 +52,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Solver.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="304">
-              <caret line="173" column="21" lean-forward="true" selection-start-line="173" selection-start-column="21" selection-end-line="173" selection-end-column="21" />
+            <state relative-caret-position="443">
+              <caret line="127" lean-forward="true" selection-start-line="127" selection-end-line="127" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#1093#1094#0" expanded="true" />
@@ -118,12 +68,6 @@
         </entry>
       </file>
     </leaf>
-  </component>
-  <component name="FindInProjectRecents">
-    <findStrings>
-      <find>maxHeapify</find>
-      <find>System.out</find>
-    </findStrings>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
@@ -162,7 +106,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1594346141108" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1594259498867" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -203,34 +147,24 @@
     </task>
     <servers />
   </component>
-  <component name="TodoView">
-    <todo-panel id="selected-file">
-      <is-autoscroll-to-source value="true" />
-    </todo-panel>
-    <todo-panel id="all">
-      <are-packages-shown value="true" />
-      <is-autoscroll-to-source value="true" />
-    </todo-panel>
-  </component>
   <component name="ToolWindowManager">
-    <frame x="-7" y="-7" width="1550" height="838" extended-state="6" />
+    <frame x="762" y="0" width="781" height="830" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" weight="0.23525469" />
+      <window_info content_ui="combo" id="Project" order="0" weight="0.47717842" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Image Layers" order="2" />
       <window_info id="Designer" order="3" />
       <window_info id="UI Designer" order="4" />
       <window_info id="Capture Tool" order="5" />
       <window_info id="Favorites" order="6" side_tool="true" />
-      <window_info anchor="bottom" id="Messages" weight="0.32907802" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.32624114" />
+      <window_info anchor="bottom" id="Run" order="2" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="TODO" order="6" weight="0.3248227" />
+      <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Tool Output" order="8" />
       <window_info anchor="bottom" id="Terminal" order="9" />
@@ -259,20 +193,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/solver.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="jar://D:/Java/src.zip!/java/util/Stack.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="475">
-          <caret line="48" column="6" selection-start-line="48" selection-start-column="6" selection-end-line="48" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Solver.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="304">
-          <caret line="173" column="21" lean-forward="true" selection-start-line="173" selection-start-column="21" selection-end-line="173" selection-end-column="21" />
+        <state relative-caret-position="443">
+          <caret line="127" lean-forward="true" selection-start-line="127" selection-end-line="127" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#1093#1094#0" expanded="true" />
@@ -284,6 +208,9 @@
           </folding>
         </state>
       </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/solver.py">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
   </component>
   <component name="masterDetails">

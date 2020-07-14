@@ -1,11 +1,51 @@
 import java.io.*;
 import java.util.*;
+import java.lang.Math;
+
+class Tabu {
+    private int size;
+    private LinkedList<Integer> tabuQueue;
+    private HashSet<Integer> tabuSet;
+
+    Tabu(int size) {
+        this.size = size;
+        tabuSet = new HashSet<>();
+        tabuQueue = new LinkedList<>();
+    }
+
+    boolean contains(int node) {
+        return tabuSet.contains(node);
+    }
+
+    void push(int node) {
+        if (tabuSet.contains(node)) {
+            return;
+        }
+        tabuSet.add(node);
+        tabuQueue.addLast(node);
+        if (tabuSet.size() > size) {
+            pop();
+        }
+    }
+
+    void pop() {
+        int node = tabuQueue.removeFirst();
+        tabuSet.remove(node);
+    }
+}
 
 public class Solver {
-    static int nodeCount;
-    static float[][] points;
-    static float minValue;
-    static int[] solution;
+    private static int nodeCount;
+    private static float[][] points;
+    private static float minValue;
+    private static int[] solution;
+
+    private static int[] next;
+    private static int[] prev;
+    private static float[] dist;
+
+    private static Random random = new Random();
+    private static Tabu tabu;
 
     public static void main(String[] args) {
         try {
@@ -15,10 +55,156 @@ public class Solver {
         }
     }
 
-    static float length(float[] a, float[] b) {
+    private static float length(float[] a, float[] b) {
         float v1 = a[0] - b[0];
         float v2 = a[1] - b[1];
         return (float)Math.sqrt(v1 * v1 + v2 * v2);
+    }
+
+    /**
+     * Randomly generates a tour sequence.
+     * @return the total distance of the tour
+     */
+    private static float shuffle() {
+        float result = 0;
+        for (int i = 0; i < next.length; i++) {
+            next[i] = i;
+        }
+        for (int i = next.length - 1; i > 0; i--) {
+            int j = random.nextInt(i);
+            int temp = next[i];
+            next[i] = next[j];
+            next[j] = temp;
+            prev[next[i]] = i;
+            dist[i] = length(points[i], points[next[i]]);
+            result += dist[i];
+        }
+        prev[next[0]] = 0;
+        dist[0] = length(points[0], points[next[0]]);
+        result += dist[0];
+        return result;
+    }
+
+    /**
+     * Reconstruct dist[] and prev[] using next[].
+     */
+    private static void reconstructTour() {
+        for (int i = 0; i < nodeCount; i++) {
+            prev[next[i]] = i;
+            dist[i] = length(points[i], points[next[i]]);
+        }
+    }
+
+    private static float kOpt(int k) {
+        k--; // 2-Opt means we are swapping 2 edges once, and we swap edges incrementally
+        float minDiff = 0;
+        float diff = 0;
+        float maxDist = 0;
+        int selected = -1;
+        for (int i = 0; i < nodeCount; i++) {
+            if (dist[i] > maxDist && !tabu.contains(i)) {
+                maxDist = dist[i];
+                selected = i;
+            }
+        }
+
+        assert selected != -1; // We are promised to get a node
+
+        int[] bestNext = next.clone(); // The best solution we get in this k-Opt operation
+        while (k-- > 0 && !tabu.contains(selected)) {
+            tabu.push(selected);
+            float minDist = maxDist;
+            int candidate = -1;
+            for (int i = 0; i < nodeCount; i++) {
+                if (i != selected && i != next[selected] && i != prev[selected]
+                        && minDist > length(points[i], points[selected])) {
+                    candidate = i;
+                    minDist = length(points[i], points[selected]);
+                }
+            }
+            if (candidate == -1) {
+                break;
+            }
+            int candidateNext = next[candidate];
+            int selectedNext = next[selected];
+            float newEdge2 = length(points[selectedNext], points[candidateNext]);
+            diff += minDist + newEdge2 - maxDist - dist[candidate];
+            next[selected] = candidate;
+            dist[selected] = minDist;
+            for (int j = candidate; j != selectedNext; j = prev[j]) {
+                dist[j] = dist[prev[j]];
+                next[j] = prev[j];
+            }
+            for (int j = selected; j != selectedNext; j = next[j]) {
+                prev[next[j]] = j;
+            }
+            next[selectedNext] = candidateNext;
+            prev[candidateNext] = selectedNext;
+            dist[selectedNext] = newEdge2;
+            selected = selectedNext;
+            maxDist = newEdge2;
+            if (diff < minDiff) {
+                minDiff = diff;
+                bestNext = next.clone();
+            }
+        }
+
+        next = bestNext.clone();
+        reconstructTour();
+        return minDiff;
+    }
+
+    private static boolean check() {
+        int i = next[0];
+        int ct = 1;
+        while (i != 0) {
+            i = next[i];
+            ct++;
+        }
+        return ct == nodeCount;
+    }
+
+    private static float calcValue() {
+        float v = 0;
+        for (int i = 0; i < nodeCount; i++) {
+            v += length(points[i], points[next[i]]);
+        }
+        return v;
+    }
+
+    private static void search() {
+        int tryCount = 0;
+        int tryLimit = 2000;
+        minValue = shuffle();
+        int[] bestNext = next.clone();
+        while (tryCount < tryLimit) {
+            tabu = new Tabu(nodeCount / 10);
+            float value = shuffle();
+            int threshold = 50;
+            int pressure = 0;
+            while (pressure < threshold) {
+                float diff = kOpt(3);
+                value += diff;
+                if (diff == 0) {
+                    pressure++;
+                }
+                else {
+                    if (pressure != 0) {
+                        threshold--;
+                    }
+                    pressure = 0;
+                }
+            }
+            if (minValue > value) {
+                minValue = value;
+                bestNext = next.clone();
+            }
+            tryCount++;
+        }
+
+        for (int i = 0, j = 0; i < nodeCount; i++, j = bestNext[j]) {
+            solution[i] = j;
+        }
     }
 
     /**
@@ -33,6 +219,7 @@ public class Solver {
                 fileName = arg.substring(6);
             } 
         }
+//        fileName = "tmp.data";
         if(fileName == null)
             return;
         
@@ -63,11 +250,11 @@ public class Solver {
         }
 
         solution = new int[nodeCount];
-        minValue = 0;
-        for (int i = 0; i < nodeCount; i++) {
-            solution[i] = i;
-            minValue += length(points[i], points[(i + 1) % nodeCount]);
-        }
+        next = new int[nodeCount];
+        prev = new int[nodeCount];
+        dist = new float[nodeCount];
+
+        search();
 
         // prepare the solution in the specified output format
         System.out.println(minValue + " 0");

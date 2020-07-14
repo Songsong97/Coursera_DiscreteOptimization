@@ -4,7 +4,7 @@ import java.lang.Math;
 
 class Tabu {
     private int size;
-    private LinkedList<Integer> tabuQueue;
+    LinkedList<Integer> tabuQueue;
     private HashSet<Integer> tabuSet;
 
     Tabu(int size) {
@@ -117,6 +117,7 @@ public class Solver {
             int candidate = -1;
             for (int i = 0; i < nodeCount; i++) {
                 if (i != selected && i != next[selected] && i != prev[selected]
+                        && !tabu.contains(candidate)
                         && minDist > length(points[i], points[selected])) {
                     candidate = i;
                     minDist = length(points[i], points[selected]);
@@ -176,9 +177,11 @@ public class Solver {
         int tryCount = 0;
         int tryLimit = 2000;
         minValue = shuffle();
+        Tabu bestTabu = new Tabu(10); // Todo: check if tabu is stopping us from finding better solution
         int[] bestNext = next.clone();
         while (tryCount < tryLimit) {
-            tabu = new Tabu(nodeCount / 10);
+            int tabuSize = nodeCount / 10;
+            tabu = new Tabu(tabuSize);
             float value = shuffle();
             int threshold = 50;
             int pressure = 0;
@@ -198,6 +201,7 @@ public class Solver {
             if (minValue > value) {
                 minValue = value;
                 bestNext = next.clone();
+                bestTabu = tabu;
             }
             tryCount++;
         }
@@ -205,6 +209,13 @@ public class Solver {
         for (int i = 0, j = 0; i < nodeCount; i++, j = bestNext[j]) {
             solution[i] = j;
         }
+
+        // Todo: delete this output
+        System.out.print("tabu: ");
+        for (int node : bestTabu.tabuQueue) {
+            System.out.print(node + " ");
+        }
+        System.out.println("");
     }
 
     /**
@@ -219,7 +230,9 @@ public class Solver {
                 fileName = arg.substring(6);
             } 
         }
-//        fileName = "tmp.data";
+        fileName = "./data/tsp_100_2";
+        fileName = "./data/tmp.data";
+        fileName = "./data/tsp_200_2";
         if(fileName == null)
             return;
         
@@ -262,5 +275,18 @@ public class Solver {
             System.out.print(solution[i] + " ");
         }
         System.out.println("");
+
+        BufferedWriter writer = new BufferedWriter(new FileWriter("solution"));
+        try {
+            writer.write(minValue + " 0");
+            writer.newLine();
+            for (int i = 0; i < nodeCount; i++) {
+                writer.write(solution[i] + " ");
+            }
+            writer.newLine();
+        }
+        finally {
+            writer.close();
+        }
     }
 }

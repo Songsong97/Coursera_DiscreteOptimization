@@ -85,6 +85,39 @@ public class Solver {
         return result;
     }
 
+    private static float greedy() {
+        float result = 0;
+        HashSet<Integer> set = new HashSet<>();
+        for (int i = 0; i < nodeCount; i++) {
+            set.add(i);
+        }
+        int start = random.nextInt(nodeCount);
+        int p = start;
+        set.remove(p);
+        while (!set.isEmpty()) {
+            float minD = Float.MAX_VALUE;
+            int n = -1;
+            for (int i : set) {
+                float d = length(points[i], points[p]);
+                if (d < minD) {
+                    minD = d;
+                    n = i;
+                }
+            }
+            set.remove(n);
+            next[p] = n;
+            prev[n] = p;
+            dist[p] = minD;
+            result += minD;
+            p = n;
+        }
+        next[p] = start;
+        prev[start] = p;
+        dist[p] = length(points[start], points[p]);
+        result += dist[p];
+        return result;
+    }
+
     /**
      * Reconstruct dist[] and prev[] using next[].
      */
@@ -92,34 +125,6 @@ public class Solver {
         for (int i = 0; i < nodeCount; i++) {
             prev[next[i]] = i;
             dist[i] = length(points[i], points[next[i]]);
-        }
-    }
-
-    private static boolean check() {
-        int i = next[0];
-        int ct = 1;
-        while (i != 0) {
-            i = next[i];
-            ct++;
-        }
-        return ct == nodeCount;
-    }
-
-    private static float calcValue() {
-        float v = 0;
-        for (int i = 0; i < nodeCount; i++) {
-            v += length(points[i], points[next[i]]);
-        }
-        return v;
-    }
-
-    private static void showTabu(Tabu t) {
-        if (tabu != null) {
-            System.out.print("tabu: ");
-            for (int node : t.tabuQueue) {
-                System.out.print(node + " ");
-            }
-            System.out.println("");
         }
     }
 
@@ -193,14 +198,13 @@ public class Solver {
     private static void search() {
         int tryCount = 0;
         int tryLimit = 2000;
-        minValue = shuffle();
-        Tabu bestTabu = new Tabu(10); // Todo: check if tabu is stopping us from finding better solution
+        minValue = greedy();
         int[] bestNext = next.clone();
         while (tryCount < tryLimit) {
             int tabuSize = nodeCount / 10;
             tabu = new Tabu(tabuSize);
-            float value = shuffle();
-            int threshold = 50;
+            float value = greedy();
+            int threshold = 20;
             int pressure = 0;
             while (pressure < threshold) {
                 float diff = kOpt(3);
@@ -218,7 +222,6 @@ public class Solver {
             if (minValue > value) {
                 minValue = value;
                 bestNext = next.clone();
-                bestTabu = tabu;
             }
             tryCount++;
         }
@@ -226,8 +229,6 @@ public class Solver {
         for (int i = 0, j = 0; i < nodeCount; i++, j = bestNext[j]) {
             solution[i] = j;
         }
-
-//        showTabu(bestTabu);
     }
 
     /**
@@ -242,11 +243,6 @@ public class Solver {
                 fileName = arg.substring(6);
             } 
         }
-//        fileName = "./data/tsp_100_2";
-//        fileName = "./data/tmp.data";
-//        fileName = "./data/tsp_200_2";
-//        fileName = "./data/tsp_1000_1";
-//        fileName = "./data/tsp_1889_1";
         if(fileName == null)
             return;
         

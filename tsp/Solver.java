@@ -95,6 +95,34 @@ public class Solver {
         }
     }
 
+    private static boolean check() {
+        int i = next[0];
+        int ct = 1;
+        while (i != 0) {
+            i = next[i];
+            ct++;
+        }
+        return ct == nodeCount;
+    }
+
+    private static float calcValue() {
+        float v = 0;
+        for (int i = 0; i < nodeCount; i++) {
+            v += length(points[i], points[next[i]]);
+        }
+        return v;
+    }
+
+    private static void showTabu(Tabu t) {
+        if (tabu != null) {
+            System.out.print("tabu: ");
+            for (int node : t.tabuQueue) {
+                System.out.print(node + " ");
+            }
+            System.out.println("");
+        }
+    }
+
     private static float kOpt(int k) {
         k--; // 2-Opt means we are swapping 2 edges once, and we swap edges incrementally
         float minDiff = 0;
@@ -113,14 +141,22 @@ public class Solver {
         int[] bestNext = next.clone(); // The best solution we get in this k-Opt operation
         while (k-- > 0 && !tabu.contains(selected)) {
             tabu.push(selected);
-            float minDist = maxDist;
+            float foundEdge = 0;
+            float foundEdge2 = 0;
+            float improvement = 0;
             int candidate = -1;
             for (int i = 0; i < nodeCount; i++) {
                 if (i != selected && i != next[selected] && i != prev[selected]
-                        && !tabu.contains(candidate)
-                        && minDist > length(points[i], points[selected])) {
-                    candidate = i;
-                    minDist = length(points[i], points[selected]);
+                        && !tabu.contains(candidate)) {
+                    float newEdge = length(points[i], points[selected]);
+                    float newEdge2 = length(points[next[i]], points[next[selected]]);
+                    float temp = newEdge + newEdge2 - maxDist - dist[i];
+                    if (temp <improvement) {
+                        improvement = temp;
+                        foundEdge = newEdge;
+                        foundEdge2 = newEdge2;
+                        candidate = i;
+                    }
                 }
             }
             if (candidate == -1) {
@@ -128,10 +164,9 @@ public class Solver {
             }
             int candidateNext = next[candidate];
             int selectedNext = next[selected];
-            float newEdge2 = length(points[selectedNext], points[candidateNext]);
-            diff += minDist + newEdge2 - maxDist - dist[candidate];
+            diff += improvement;
             next[selected] = candidate;
-            dist[selected] = minDist;
+            dist[selected] = foundEdge;
             for (int j = candidate; j != selectedNext; j = prev[j]) {
                 dist[j] = dist[prev[j]];
                 next[j] = prev[j];
@@ -141,9 +176,9 @@ public class Solver {
             }
             next[selectedNext] = candidateNext;
             prev[candidateNext] = selectedNext;
-            dist[selectedNext] = newEdge2;
+            dist[selectedNext] = foundEdge2;
             selected = selectedNext;
-            maxDist = newEdge2;
+            maxDist = foundEdge2;
             if (diff < minDiff) {
                 minDiff = diff;
                 bestNext = next.clone();
@@ -153,24 +188,6 @@ public class Solver {
         next = bestNext.clone();
         reconstructTour();
         return minDiff;
-    }
-
-    private static boolean check() {
-        int i = next[0];
-        int ct = 1;
-        while (i != 0) {
-            i = next[i];
-            ct++;
-        }
-        return ct == nodeCount;
-    }
-
-    private static float calcValue() {
-        float v = 0;
-        for (int i = 0; i < nodeCount; i++) {
-            v += length(points[i], points[next[i]]);
-        }
-        return v;
     }
 
     private static void search() {
@@ -210,12 +227,7 @@ public class Solver {
             solution[i] = j;
         }
 
-        // Todo: delete this output
-        System.out.print("tabu: ");
-        for (int node : bestTabu.tabuQueue) {
-            System.out.print(node + " ");
-        }
-        System.out.println("");
+//        showTabu(bestTabu);
     }
 
     /**
@@ -230,9 +242,11 @@ public class Solver {
                 fileName = arg.substring(6);
             } 
         }
-        fileName = "./data/tsp_100_2";
-        fileName = "./data/tmp.data";
-        fileName = "./data/tsp_200_2";
+//        fileName = "./data/tsp_100_2";
+//        fileName = "./data/tmp.data";
+//        fileName = "./data/tsp_200_2";
+//        fileName = "./data/tsp_1000_1";
+//        fileName = "./data/tsp_1889_1";
         if(fileName == null)
             return;
         

@@ -171,6 +171,7 @@ public class Solver {
     /**
      * Recursive version of the helper method, which will cause stack overflow when input size is large
      */
+    @Deprecated
     public static void helper(int i, int value, int room, float bounding) {
         if (bounding <= maxValue) {
             return;

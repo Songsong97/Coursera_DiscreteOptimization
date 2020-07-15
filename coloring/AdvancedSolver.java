@@ -2,6 +2,11 @@ import java.io.*;
 import java.util.*;
 import java.lang.Math;
 
+/**
+ * The idea is learned from https://github.com/kouei/discrete-optimization/blob/master/coloring/main.cpp
+ * I translated it into Java.
+ */
+
 class Tabu {
     private int size;
     private HashSet<Integer> tabuSet;

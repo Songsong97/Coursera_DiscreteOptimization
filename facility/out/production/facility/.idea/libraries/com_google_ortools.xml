@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="com.google.ortools">
+    <CLASSES>
+      <root url="jar://D:/OrToolGoogle/or-tools_VisualStudio2019-64bit_v7.7.7810/lib/com.google.ortools.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

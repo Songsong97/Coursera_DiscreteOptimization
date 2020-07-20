@@ -15,7 +15,7 @@ def solve_it(input_data):
 
     # Runs the command: java Solver -file=tmp.data
 
-    process = Popen(['java', 'Solver', '-file=' + tmp_file_name], stdout=PIPE, universal_newlines=True)
+    process = Popen(['java', '-cp', '\".;D:/OrToolGoogle/or-tools_VisualStudio2019-64bit_v7.7.7810/lib/com.google.ortools.jar;D:/OrToolGoogle/or-tools_VisualStudio2019-64bit_v7.7.7810/lib/protobuf.jar\"', 'Solver', '-file=' + tmp_file_name], stdout=PIPE, universal_newlines=True)
     (stdout, stderr) = process.communicate()
 
     # removes the temporary file

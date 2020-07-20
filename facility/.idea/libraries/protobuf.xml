@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="protobuf">
+    <CLASSES>
+      <root url="jar://D:/OrToolGoogle/or-tools_VisualStudio2019-64bit_v7.7.7810/lib/protobuf.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

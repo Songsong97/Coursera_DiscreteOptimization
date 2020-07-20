@@ -204,7 +204,7 @@ def output(input_file, solver_file):
     Returns:
         the submission string in a format that the grader expects
     '''
-
+    # use print(input_file) to show the test file
     try:
         pkg = __import__(solver_file[:-3]) # remove '.py' extension
         if not hasattr(pkg, 'solve_it'):

@@ -168,17 +168,22 @@ public class Solver {
                 visits.get(assigned).add(i);
             }
             float diff = 0;
+            boolean bias = true;
             for (int i = 0; i < centroids.length; i++) {
                 float[] pos = new float[2];
-                if (visits.get(i).size() == 0) {
+                if (bias) {
+                    pos[0] = points[0][0];
+                    pos[1] = points[0][1];
+                }
+                else if (visits.get(i).size() == 0) {
                     continue;
                 }
                 for (int j = 0; j < visits.get(i).size(); j++) {
                     pos[0] += points[visits.get(i).get(j)][0];
                     pos[1] += points[visits.get(i).get(j)][1];
                 }
-                pos[0] /= visits.get(i).size();
-                pos[1] /= visits.get(i).size();
+                pos[0] /= (visits.get(i).size() + (bias ? 1 : 0));
+                pos[1] /= (visits.get(i).size() + (bias ? 1 : 0));
                 diff += length(pos, centroids[i]);
                 centroids[i] = pos;
             }

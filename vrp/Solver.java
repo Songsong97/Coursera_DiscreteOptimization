@@ -1,5 +1,4 @@
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.lang.Math;
 
@@ -40,10 +39,12 @@ public class Solver {
     private static int nodeCount;
     private static int vehicleCount;
     private static int capacity;
+    private static float distantLength;
 
     // demands and locations of each customer, with 0 representing the warehouse
     private static int[] demand;
     private static float[][] points;
+    private static float[][] distance;
 
     // the best objective and solution found so far
     private static float minValue;
@@ -51,6 +52,10 @@ public class Solver {
 
     // random generator
     private static Random random = new Random(0);
+
+    // Tabu
+    private static Tabu vehicleTabu;
+    private static Tabu nodeTabu;
 
     // other variables
     private static float[][] centroids;
@@ -70,6 +75,17 @@ public class Solver {
         return (float)Math.sqrt(v1 * v1 + v2 * v2);
     }
 
+    private static void computeCentroid(int vehicleIndex) {
+        centroids[vehicleIndex][0] = points[0][0];
+        centroids[vehicleIndex][1] = points[0][1];
+        for (int idx : visits.get(vehicleIndex)) {
+            centroids[vehicleIndex][0] += points[idx][0];
+            centroids[vehicleIndex][1] += points[idx][1];
+        }
+        centroids[vehicleIndex][0] /= visits.get(vehicleIndex).size() + 1;
+        centroids[vehicleIndex][1] /= visits.get(vehicleIndex).size() + 1;
+    }
+
 //    private static float kOpt(int k) {
 //        k--; // 2-Opt means we are swapping 2 edges once, and we swap edges incrementally
 //        float minDiff = 0;
@@ -77,7 +93,7 @@ public class Solver {
 //        float maxDist = 0;
 //        int selected = -1;
 //        for (int i = 0; i < nodeCount; i++) {
-//            if (dist[i] > maxDist && !tabu.contains(i)) {
+//            if (dist[i] > maxDist && !vehicleTabu.contains(i)) {
 //                maxDist = dist[i];
 //                selected = i;
 //            }
@@ -86,15 +102,15 @@ public class Solver {
 //        assert selected != -1; // We are promised to get a node
 //
 //        int[] bestNext = next.clone(); // The best solution we get in this k-Opt operation
-//        while (k-- > 0 && !tabu.contains(selected)) {
-//            tabu.push(selected);
+//        while (k-- > 0 && !vehicleTabu.contains(selected)) {
+//            vehicleTabu.push(selected);
 //            float foundEdge = 0;
 //            float foundEdge2 = 0;
 //            float improvement = 0;
 //            int candidate = -1;
 //            for (int i = 0; i < nodeCount; i++) {
 //                if (i != selected && i != next[selected] && i != prev[selected]
-//                        && !tabu.contains(candidate)) {
+//                        && !vehicleTabu.contains(candidate)) {
 //                    float newEdge = length(points[i], points[selected]);
 //                    float newEdge2 = length(points[next[i]], points[next[selected]]);
 //                    float temp = newEdge + newEdge2 - maxDist - dist[i];
@@ -137,6 +153,52 @@ public class Solver {
 //        return minDiff;
 //    }
 
+    private static void search() {
+        kMeans();
+        prepareSolution();
+
+
+    }
+
+    private static void prepareSolution() {
+        solution = new int[vehicleCount][];
+        for (int i = 0; i < vehicleCount; i++) {
+            solution[i] = new int[visits.get(i).size()];
+            for (int j = 0; j < solution[i].length; j++) {
+                solution[i][j] = visits.get(i).get(j);
+            }
+        }
+    }
+
+    private static int getViolatedVehicle(LinkedList<Integer> emptyList) {
+        int maxViolation = 0;
+        emptyList.clear();
+        ArrayList<Integer> candidate = new ArrayList<>();
+        for (int i = 0; i < vehicleCount; i++) {
+            if (visits.get(i).size() == 0) {
+                emptyList.addFirst(i);
+            }
+            else {
+                int violation = 0;
+                for (int idx : visits.get(i)) {
+                    violation += demand[idx];
+                }
+                if (violation - capacity > maxViolation) {
+                    maxViolation = violation - capacity;
+                    candidate.clear();
+                    candidate.add(i);
+                }
+                else if (violation - capacity == maxViolation) {
+                    candidate.add(i);
+                }
+            }
+        }
+        int result = -1;
+        if (maxViolation > 0) {
+            result = candidate.get(random.nextInt(candidate.size()));
+        }
+        return result;
+    }
 
     private static void kMeans() {
         visits = new ArrayList<>();
@@ -192,13 +254,6 @@ public class Solver {
                 break;
             }
         }
-        solution = new int[vehicleCount][];
-        for (int i = 0; i < vehicleCount; i++) {
-            solution[i] = new int[visits.get(i).size()];
-            for (int j = 0; j < solution[i].length; j++) {
-                solution[i][j] = visits.get(i).get(j);
-            }
-        }
     }
 
     /**
@@ -213,7 +268,7 @@ public class Solver {
                 fileName = arg.substring(6);
             } 
         }
-        fileName = "./data/vrp_421_41_1";
+        fileName = "./data/vrp_200_16_1";
         if(fileName == null)
             return;
         
@@ -247,7 +302,18 @@ public class Solver {
             points[i][1] = Float.parseFloat(parts[2]);
         }
 
-        kMeans();
+        distance = new float[nodeCount][nodeCount];
+        distantLength = 0;
+        for (int i = 0; i < nodeCount; i++) {
+            for (int j = 0; j < i; j++) {
+                float dist = length(points[i], points[j]);
+                distance[i][j] = dist;
+                distance[j][i] = dist;
+                distantLength = Math.max(distantLength, dist);
+            }
+        }
+
+        search();
 
 
 

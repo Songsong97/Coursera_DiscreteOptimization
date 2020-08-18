@@ -1,4 +1,5 @@
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.lang.Math;
 
@@ -86,118 +87,203 @@ public class Solver {
         centroids[vehicleIndex][1] /= visits.get(vehicleIndex).size() + 1;
     }
 
-//    private static float kOpt(int k) {
-//        k--; // 2-Opt means we are swapping 2 edges once, and we swap edges incrementally
-//        float minDiff = 0;
-//        float diff = 0;
-//        float maxDist = 0;
-//        int selected = -1;
-//        for (int i = 0; i < nodeCount; i++) {
-//            if (dist[i] > maxDist && !vehicleTabu.contains(i)) {
-//                maxDist = dist[i];
-//                selected = i;
-//            }
-//        }
-//
-//        assert selected != -1; // We are promised to get a node
-//
-//        int[] bestNext = next.clone(); // The best solution we get in this k-Opt operation
-//        while (k-- > 0 && !vehicleTabu.contains(selected)) {
-//            vehicleTabu.push(selected);
-//            float foundEdge = 0;
-//            float foundEdge2 = 0;
-//            float improvement = 0;
-//            int candidate = -1;
-//            for (int i = 0; i < nodeCount; i++) {
-//                if (i != selected && i != next[selected] && i != prev[selected]
-//                        && !vehicleTabu.contains(candidate)) {
-//                    float newEdge = length(points[i], points[selected]);
-//                    float newEdge2 = length(points[next[i]], points[next[selected]]);
-//                    float temp = newEdge + newEdge2 - maxDist - dist[i];
-//                    if (temp <improvement) {
-//                        improvement = temp;
-//                        foundEdge = newEdge;
-//                        foundEdge2 = newEdge2;
-//                        candidate = i;
-//                    }
-//                }
-//            }
-//            if (candidate == -1) {
-//                break;
-//            }
-//            int candidateNext = next[candidate];
-//            int selectedNext = next[selected];
-//            diff += improvement;
-//            next[selected] = candidate;
-//            dist[selected] = foundEdge;
-//            for (int j = candidate; j != selectedNext; j = prev[j]) {
-//                dist[j] = dist[prev[j]];
-//                next[j] = prev[j];
-//            }
-//            for (int j = selected; j != selectedNext; j = next[j]) {
-//                prev[next[j]] = j;
-//            }
-//            next[selectedNext] = candidateNext;
-//            prev[candidateNext] = selectedNext;
-//            dist[selectedNext] = foundEdge2;
-//            selected = selectedNext;
-//            maxDist = foundEdge2;
-//            if (diff < minDiff) {
-//                minDiff = diff;
-//                bestNext = next.clone();
-//            }
-//        }
-//
-//        next = bestNext.clone();
-//        reconstructTour();
-//        return minDiff;
-//    }
+    private static float getCost(int vehicleIndex) {
+        if (visits.get(vehicleIndex).size() == 0) {
+            return 0;
+        }
+        visits.get(vehicleIndex).add(0);
+        final int sz = visits.get(vehicleIndex).size();
+        float result = 0;
+        for (int i = 0; i < sz; i++) {
+            int node = visits.get(vehicleIndex).get(i);
+            int next = visits.get(vehicleIndex).get((i + 1) % sz);
+            result += distance[node][next];
+        }
+        visits.get(vehicleIndex).remove(sz - 1);
+        return result;
+    }
+
+    private static float greedy(int vehicleIndex) {
+        float result = 0;
+        visits.get(vehicleIndex).add(0);
+        final int sz = visits.get(vehicleIndex).size();
+        HashSet<Integer> set = new HashSet<>();
+        for (int i = 0; i < sz; i++) {
+            set.add(visits.get(vehicleIndex).get(i));
+        }
+        int start = visits.get(vehicleIndex).get(random.nextInt(sz));
+        visits.get(vehicleIndex).clear();
+        int p = start;
+        set.remove(p);
+        int zero = 0;
+        ArrayList<Integer> tempList = new ArrayList<>();
+        tempList.add(p);
+        while (!set.isEmpty()) {
+            float minD = Float.MAX_VALUE;
+            int n = -1;
+            for (int node : set) {
+                float d = distance[node][p];
+                if (d < minD) {
+                    minD = d;
+                    n = node;
+                }
+            }
+            set.remove(n);
+            result += minD;
+            p = n;
+            tempList.add(p);
+            if (p == 0) {
+                zero = tempList.size() - 1;
+            }
+        }
+        result += distance[p][start];
+        for (int i = (1 + zero) % sz, ct = 1; ct < sz; ct++, i = (i + 1) % sz) {
+            visits.get(vehicleIndex).add(tempList.get(i));
+        }
+        return result;
+    }
+
+    private static float kOpt(int vehicleIndex, int k, Tabu tabu) {
+        k--; // 2-Opt means we are swapping 2 edges once, and we swap edges incrementally
+        int selected = -1;
+        int selectedNext = 0;
+        visits.get(vehicleIndex).add(0);
+        final int sz = visits.get(vehicleIndex).size();
+        float maxDist = 0;
+        for (int i = 0; i < sz; i++) {
+            int node = visits.get(vehicleIndex).get(i);
+            int next = visits.get(vehicleIndex).get((i + 1) % sz);
+            if (distance[node][next] > maxDist && !tabu.contains(node)) {
+                maxDist = distance[node][next];
+                selected = node;
+                selectedNext = next;
+            }
+        }
+        assert selected != -1; // We are promised to get a node
+
+        // The best solution we get in this k-Opt operation
+        Integer[] best = visits.get(vehicleIndex).toArray(new Integer[sz]);
+        float diff = 0;
+        float minDiff = 0;
+        while (k-- > 0 && !tabu.contains(selected)) {
+            tabu.push(selected);
+            float improvement = 0; // improvement is negative since we want to reduce the cost
+            float foundEdge = 0;
+            int candidate = -1;
+            for (int i = 0; i < sz; i++) {
+                int node = visits.get(vehicleIndex).get(i);
+                int next = visits.get(vehicleIndex).get((i + 1) % sz);
+                if (node != selected && next != selected && node != selectedNext
+                        && !tabu.contains(candidate)) {
+                    float newEdge = length(points[node], points[selected]);
+                    float newEdge2 = length(points[next], points[selectedNext]);
+                    float temp = newEdge + newEdge2 - maxDist - distance[node][next];
+                    if (temp < improvement) {
+                        improvement = temp;
+                        candidate = node;
+                        foundEdge = newEdge2;
+                    }
+                }
+            }
+            if (candidate == -1) {
+                break;
+            }
+
+            // reorder the path
+            int start = visits.get(vehicleIndex).indexOf(selectedNext);
+            int end = visits.get(vehicleIndex).indexOf(candidate);
+            int ct = start < end ? (end - start + 1) : (sz - start + end + 1);
+            while (ct >= 2) {
+                int node1 = visits.get(vehicleIndex).get(start);
+                int node2 = visits.get(vehicleIndex).get(end);
+                visits.get(vehicleIndex).set(start, node2);
+                visits.get(vehicleIndex).set(end, node1);
+                start = (start + 1) % sz;
+                end = (end - 1 + sz) % sz;
+                ct -= 2;
+            }
+
+            selected = selectedNext;
+            maxDist = foundEdge;
+            diff += improvement;
+            if (diff < minDiff) {
+                minDiff = diff;
+                best = visits.get(vehicleIndex).toArray(new Integer[sz]);
+            }
+        }
+
+        // reconstruct the solution
+        visits.get(vehicleIndex).clear();
+        int zero = 0;
+        while (zero < sz && best[zero] != 0) {
+            zero++;
+        }
+        for (int i = (zero + 1) % sz, ct = 1; ct < sz; ct++, i = (i + 1) % sz) {
+            visits.get(vehicleIndex).add(best[i]);
+        }
+        return minDiff;
+    }
 
     private static void search() {
         kMeans();
+
+        for (int i = 0; i < vehicleCount; i++) {
+            if (visits.get(i).size() == 0) {
+                continue;
+            }
+            final int sz = visits.get(i).size();
+            int tryCount = 0;
+            int tryLimit = 1000;
+            float minCost = greedy(i);
+            Integer[] best = visits.get(i).toArray(new Integer[sz]);
+            while (tryCount++ < tryLimit) {
+                System.out.println("vehicle: " + i + ", " + tryCount);
+                int tabuSize = Math.min(sz / 2 + 2, sz - 1);
+                Tabu t = new Tabu(tabuSize);
+                float cost = greedy(i);
+                int threshold = 20;
+                int pressure = 0;
+                while (pressure < threshold) {
+                    float diff = kOpt(i, 3, t);
+                    cost += diff;
+                    if (diff == 0) {
+                        pressure++;
+                    }
+                    else {
+                        if (pressure != 0) {
+                            threshold--;
+                        }
+                        pressure = 0;
+                    }
+                }
+                if (minCost > cost) {
+                    minCost = cost;
+                    best = visits.get(i).toArray(new Integer[sz]);
+                }
+            }
+
+            visits.get(i).clear();
+            for (int node : best) {
+                visits.get(i).add(node);
+            }
+        }
+        // todo: use relocate and exchange heuristic to make the solution feasible and/or cheaper
+
         prepareSolution();
 
 
     }
 
     private static void prepareSolution() {
+        minValue = 0;
         solution = new int[vehicleCount][];
         for (int i = 0; i < vehicleCount; i++) {
             solution[i] = new int[visits.get(i).size()];
             for (int j = 0; j < solution[i].length; j++) {
                 solution[i][j] = visits.get(i).get(j);
             }
+            minValue += getCost(i);
         }
-    }
-
-    private static int getViolatedVehicle(LinkedList<Integer> emptyList) {
-        int maxViolation = 0;
-        emptyList.clear();
-        ArrayList<Integer> candidate = new ArrayList<>();
-        for (int i = 0; i < vehicleCount; i++) {
-            if (visits.get(i).size() == 0) {
-                emptyList.addFirst(i);
-            }
-            else {
-                int violation = 0;
-                for (int idx : visits.get(i)) {
-                    violation += demand[idx];
-                }
-                if (violation - capacity > maxViolation) {
-                    maxViolation = violation - capacity;
-                    candidate.clear();
-                    candidate.add(i);
-                }
-                else if (violation - capacity == maxViolation) {
-                    candidate.add(i);
-                }
-            }
-        }
-        int result = -1;
-        if (maxViolation > 0) {
-            result = candidate.get(random.nextInt(candidate.size()));
-        }
-        return result;
     }
 
     private static void kMeans() {
@@ -206,7 +292,6 @@ public class Solver {
             visits.add(new ArrayList<>());
         }
         centroids = new float[vehicleCount][2];
-        // todo: may need reinitialization
         for (int i = 0; i < vehicleCount; i++) {
             int randomIdx = random.nextInt(nodeCount);
             centroids[i][0] = points[randomIdx][0];
@@ -230,7 +315,7 @@ public class Solver {
                 visits.get(assigned).add(i);
             }
             float diff = 0;
-            boolean bias = true;
+            boolean bias = true; // if bias is set, each group(vehicle) will at least have the depot as its member
             for (int i = 0; i < centroids.length; i++) {
                 float[] pos = new float[2];
                 if (bias) {
@@ -268,7 +353,7 @@ public class Solver {
                 fileName = arg.substring(6);
             } 
         }
-        fileName = "./data/vrp_200_16_1";
+//        fileName = "./data/vrp_26_8_1";
         if(fileName == null)
             return;
         

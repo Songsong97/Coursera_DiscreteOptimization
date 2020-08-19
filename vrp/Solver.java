@@ -41,11 +41,17 @@ public class Solver {
     private static int vehicleCount;
     private static int capacity;
     private static float distantLength;
+    private static float averageDemand;
 
     // demands and locations of each customer, with 0 representing the warehouse
     private static int[] demand;
     private static float[][] points;
+
+    // distance matrix
     private static float[][] distance;
+
+    // capacity violation of each vehicle
+    private static int[] violation;
 
     // the best objective and solution found so far
     private static float minValue;
@@ -53,10 +59,6 @@ public class Solver {
 
     // random generator
     private static Random random = new Random(0);
-
-    // Tabu
-    private static Tabu vehicleTabu;
-    private static Tabu nodeTabu;
 
     // other variables
     private static float[][] centroids;
@@ -74,6 +76,18 @@ public class Solver {
         float v1 = a[0] - b[0];
         float v2 = a[1] - b[1];
         return (float)Math.sqrt(v1 * v1 + v2 * v2);
+    }
+
+    private static void prepareSolution() {
+        minValue = 0;
+        solution = new int[vehicleCount][];
+        for (int i = 0; i < vehicleCount; i++) {
+            solution[i] = new int[visits.get(i).size()];
+            for (int j = 0; j < solution[i].length; j++) {
+                solution[i][j] = visits.get(i).get(j);
+            }
+            minValue += getCost(i);
+        }
     }
 
     private static void computeCentroid(int vehicleIndex) {
@@ -100,6 +114,14 @@ public class Solver {
             result += distance[node][next];
         }
         visits.get(vehicleIndex).remove(sz - 1);
+        return result;
+    }
+
+    private static int getDemand(int vehicleIndex) {
+        int result = 0;
+        for (int node : visits.get(vehicleIndex)) {
+            result += demand[node];
+        }
         return result;
     }
 
@@ -224,66 +246,174 @@ public class Solver {
         return minDiff;
     }
 
+    private static void optimizeVehicle(int vehicleIndex) {
+        if (visits.get(vehicleIndex).size() == 0) {
+            return;
+        }
+        final int sz = visits.get(vehicleIndex).size();
+        int tryCount = 0;
+        int tryLimit = 1000; // todo: try a smaller value?
+        float minCost = greedy(vehicleIndex);
+        Integer[] best = visits.get(vehicleIndex).toArray(new Integer[sz]);
+        while (tryCount++ < tryLimit) {
+//            System.out.println("vehicle: " + vehicleIndex + ", " + tryCount);
+            int tabuSize = Math.min(sz / 2 + 2, sz - 1);
+            Tabu t = new Tabu(tabuSize);
+            float cost = greedy(vehicleIndex);
+            int threshold = 20;
+            int pressure = 0;
+            while (pressure < threshold) {
+                float diff = kOpt(vehicleIndex, 3, t);
+                cost += diff;
+                if (diff == 0) {
+                    pressure++;
+                }
+                else {
+                    if (pressure != 0) {
+                        threshold--;
+                    }
+                    pressure = 0;
+                }
+            }
+            if (minCost > cost) {
+                minCost = cost;
+                best = visits.get(vehicleIndex).toArray(new Integer[sz]);
+            }
+        }
+
+        visits.get(vehicleIndex).clear();
+        for (int node : best) {
+            visits.get(vehicleIndex).add(node);
+        }
+    }
+
+    private static void relocate(int from, int to, int fromPos, int toPos) {
+        int node = visits.get(from).get(fromPos);
+        visits.get(from).remove(fromPos);
+        visits.get(to).add(toPos + 1, node);
+        violation[from] -= demand[node];
+        violation[to] += demand[node];
+    }
+
+    private static void exchange(int from, int to, int fromPos, int toPos) {
+        int node = visits.get(from).get(fromPos);
+        int other = visits.get(to).get(toPos);
+        visits.get(from).set(fromPos, other);
+        visits.get(to).set(toPos, node);
+        violation[from] = violation[from] - demand[node] + demand[other];
+        violation[to] = violation[to] - demand[other] + demand[node];
+    }
+
     private static void search() {
         kMeans();
 
         for (int i = 0; i < vehicleCount; i++) {
-            if (visits.get(i).size() == 0) {
-                continue;
-            }
-            final int sz = visits.get(i).size();
-            int tryCount = 0;
-            int tryLimit = 1000;
-            float minCost = greedy(i);
-            Integer[] best = visits.get(i).toArray(new Integer[sz]);
-            while (tryCount++ < tryLimit) {
-                System.out.println("vehicle: " + i + ", " + tryCount);
-                int tabuSize = Math.min(sz / 2 + 2, sz - 1);
-                Tabu t = new Tabu(tabuSize);
-                float cost = greedy(i);
-                int threshold = 20;
-                int pressure = 0;
-                while (pressure < threshold) {
-                    float diff = kOpt(i, 3, t);
-                    cost += diff;
-                    if (diff == 0) {
-                        pressure++;
-                    }
-                    else {
-                        if (pressure != 0) {
-                            threshold--;
-                        }
-                        pressure = 0;
-                    }
+            optimizeVehicle(i);
+            violation[i] = getDemand(i) - capacity;
+        }
+
+        float u = 1.0f;
+        int ct = 0;
+        while (true) {
+            int selectedVehicle = -1;
+            int maxViolation = 0;
+            for (int i = 0; i < vehicleCount; i++) {
+                if (violation[i] > maxViolation) {
+                    maxViolation = violation[i];
+                    selectedVehicle = i;
                 }
-                if (minCost > cost) {
-                    minCost = cost;
-                    best = visits.get(i).toArray(new Integer[sz]);
+            }
+            if (maxViolation == 0) { // we are done
+                break;
+            }
+
+            float maxScore = 0;
+            int operation = -1; // 0 means relocate, 1 means exchange
+            int candidateVehicle = -1;
+            int fromPos = -1;
+            int toPos = -1;
+            for (int i = 0, sz = visits.get(selectedVehicle).size(); i < sz; i++) {
+                int node = visits.get(selectedVehicle).get(i);
+                int prev = i > 0 ? visits.get(selectedVehicle).get(i - 1) : 0;
+                int next = i < (sz - 1) ? visits.get(selectedVehicle).get(i + 1) : 0;
+                for (int j = 0; j < vehicleCount; j++) {
+                    if (j == selectedVehicle) {
+                        continue;
+                    }
+
+                    // relocate
+                    int violationImprovement = Math.max(maxViolation, 0) + Math.max(violation[j], 0)
+                            - (Math.max(maxViolation - demand[node], 0) + Math.max(violation[j] + demand[node], 0));
+                    for (int candidateIdx = -1, csz = visits.get(j).size(); candidateIdx < csz; candidateIdx++) {
+                        int candidate = candidateIdx == -1 ? 0 : visits.get(j).get(candidateIdx);
+                        int candidateNext = candidateIdx < (csz - 1) ? visits.get(j).get(candidateIdx + 1) : 0;
+                        float distancePenalty = -distance[node][next] - distance[node][prev]
+                                + distance[candidate][node] + distance[candidateNext][node]
+                                + distance[next][prev] - distance[candidate][candidateNext];
+                        float score = violationImprovement / averageDemand
+                                - u * distancePenalty / distantLength;
+                        if (score > maxScore) {
+                            maxScore = score;
+                            operation = 0;
+                            candidateVehicle = j;
+                            fromPos = i;
+                            toPos = candidateIdx;
+                        }
+                    }
+
+                    // exchange
+                    for (int candidateIdx = 0, csz = visits.get(j).size(); candidateIdx < csz; candidateIdx++) {
+                        int candidate = visits.get(j).get(candidateIdx);
+                        int candidatePrev = candidateIdx > 0 ? visits.get(j).get(candidateIdx - 1) : 0;
+                        int candidateNext = candidateIdx < (csz - 1) ? visits.get(j).get(candidateIdx + 1) : 0;
+                        float distancePenalty = -distance[node][next] - distance[node][prev]
+                                - distance[candidate][candidateNext] - distance[candidate][candidatePrev]
+                                + distance[candidatePrev][node] + distance[candidateNext][node]
+                                + distance[next][candidate] + distance[prev][candidate];
+                        if (node >= demand.length || node < 0) {
+                            System.out.println("ljl");
+                        }
+                        if (candidate >= demand.length || candidate < 0) {
+                            System.out.println("ljl");
+                        }
+                        if (j >= violation.length || j < 0) {
+                            System.out.println("ljl");
+                        }
+                        violationImprovement = Math.max(maxViolation, 0) + Math.max(violation[j], 0) - Math.max(maxViolation - demand[node] + demand[candidate], 0) - Math.max(violation[i] - demand[candidate] + demand[node], 0);
+                        float score = violationImprovement / averageDemand
+                                - u * distancePenalty / distantLength;
+                        if (score > maxScore) {
+                            maxScore = score;
+                            operation = 1;
+                            candidateVehicle = j;
+                            fromPos = i;
+                            toPos = candidateIdx;
+                        }
+                    }
                 }
             }
 
-            visits.get(i).clear();
-            for (int node : best) {
-                visits.get(i).add(node);
+            if (maxScore == 0) {
+                u *= 0.9;
+            }
+            else {
+                if (operation == 0) {
+                    // call relocate method and optimize two vehicles
+                    relocate(selectedVehicle, candidateVehicle, fromPos, toPos);
+                    optimizeVehicle(selectedVehicle);
+                    optimizeVehicle(candidateVehicle);
+                }
+                else if (operation == 1){
+                    // call exchange method and optimize two vehicles
+                    exchange(selectedVehicle, candidateVehicle, fromPos, toPos);
+                    optimizeVehicle(selectedVehicle);
+                    optimizeVehicle(candidateVehicle);
+                }
             }
         }
-        // todo: use relocate and exchange heuristic to make the solution feasible and/or cheaper
 
         prepareSolution();
 
-
-    }
-
-    private static void prepareSolution() {
-        minValue = 0;
-        solution = new int[vehicleCount][];
-        for (int i = 0; i < vehicleCount; i++) {
-            solution[i] = new int[visits.get(i).size()];
-            for (int j = 0; j < solution[i].length; j++) {
-                solution[i][j] = visits.get(i).get(j);
-            }
-            minValue += getCost(i);
-        }
     }
 
     private static void kMeans() {
@@ -353,7 +483,7 @@ public class Solver {
                 fileName = arg.substring(6);
             } 
         }
-//        fileName = "./data/vrp_26_8_1";
+        fileName = "./data/vrp_16_3_1";
         if(fileName == null)
             return;
         
@@ -379,13 +509,17 @@ public class Solver {
 
         points = new float[nodeCount][2];
         demand = new int[nodeCount];
+        violation = new int[vehicleCount];
+        averageDemand = 0;
         for (int i = 0; i < nodeCount; i++) {
             String line = lines.get(i + 1);
             String[] parts = line.split("\\s+");
             demand[i] = Integer.parseInt(parts[0]);
             points[i][0] = Float.parseFloat(parts[1]);
             points[i][1] = Float.parseFloat(parts[2]);
+            averageDemand += demand[i];
         }
+        averageDemand /= nodeCount - 1;
 
         distance = new float[nodeCount][nodeCount];
         distantLength = 0;
@@ -399,10 +533,6 @@ public class Solver {
         }
 
         search();
-
-
-
-
 
         // prepare the solution in the specified output format
         System.out.println(minValue + " 0");

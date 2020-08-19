@@ -90,17 +90,6 @@ public class Solver {
         }
     }
 
-    private static void computeCentroid(int vehicleIndex) {
-        centroids[vehicleIndex][0] = points[0][0];
-        centroids[vehicleIndex][1] = points[0][1];
-        for (int idx : visits.get(vehicleIndex)) {
-            centroids[vehicleIndex][0] += points[idx][0];
-            centroids[vehicleIndex][1] += points[idx][1];
-        }
-        centroids[vehicleIndex][0] /= visits.get(vehicleIndex).size() + 1;
-        centroids[vehicleIndex][1] /= visits.get(vehicleIndex).size() + 1;
-    }
-
     private static float getCost(int vehicleIndex) {
         if (visits.get(vehicleIndex).size() == 0) {
             return 0;
@@ -125,6 +114,7 @@ public class Solver {
         return result;
     }
 
+    // Use greedy algorithm to generate an initial path for a given vehicle
     private static float greedy(int vehicleIndex) {
         float result = 0;
         visits.get(vehicleIndex).add(0);
@@ -165,6 +155,7 @@ public class Solver {
         return result;
     }
 
+    // Break the crossing in the path of a given vehicle
     private static float kOpt(int vehicleIndex, int k, Tabu tabu) {
         k--; // 2-Opt means we are swapping 2 edges once, and we swap edges incrementally
         int selected = -1;
@@ -246,6 +237,7 @@ public class Solver {
         return minDiff;
     }
 
+    // Use k-Opt to optimize a single vehicle's path, this is the same as a traveling salesman problem
     private static void optimizeVehicle(int vehicleIndex) {
         if (visits.get(vehicleIndex).size() == 0) {
             return;
@@ -287,6 +279,7 @@ public class Solver {
         }
     }
 
+    // Relocate a node from a vehicle to another vehicle's path
     private static void relocate(int from, int to, int fromPos, int toPos) {
         int node = visits.get(from).get(fromPos);
         visits.get(from).remove(fromPos);
@@ -295,6 +288,7 @@ public class Solver {
         violation[to] += demand[node];
     }
 
+    // Exchange two nodes from two different vehicles' paths
     private static void exchange(int from, int to, int fromPos, int toPos) {
         int node = visits.get(from).get(fromPos);
         int other = visits.get(to).get(toPos);
@@ -304,6 +298,26 @@ public class Solver {
         violation[to] = violation[to] - demand[other] + demand[node];
     }
 
+    /**
+     * The strategy of the local search is described below. The method here is not optimal and may easily get stuck
+     * in local minima, but it can generate a "good" feasible solution quickly.
+     *
+     * First, we group nodes into different clusters using k-means algorithm. This helps the solution maintain a
+     * locality structure in geography.
+     *
+     * Then, we repeat a process until we don't have violations. In each loop, we find the vehicle with the largest
+     * capacity violation and try every other node with a "relocate" and "exchange" strategy.
+     *
+     * I combined the feasibility and cost of the problem into one score using a simple formula:
+     *         score = violationImprovement / averageDemand - u * distancePenalty / distantLength
+     * where "averageDemand" is the mean of all customers' demands and "distantLength" is the largest distance between
+     * two points. "violationImprovement" is the reduction of violation after a "relocate" or "exchange" operation and
+     * "distancePenalty" is the increase in total distance(cost) after that operation.
+     *
+     * In the formula, u is used to scale the contribution of the distance penalty to the score of that operation.
+     * If we cannot find positive score, it means we have to compromise longer travel distance to make the solution
+     * feasible. So, if that happens, the algorithm reduces u gradually.
+     */
     private static void search() {
         kMeans();
 
@@ -312,8 +326,7 @@ public class Solver {
             violation[i] = getDemand(i) - capacity;
         }
 
-        float u = 1.0f;
-        int ct = 0;
+        float u = 5.0f;
         while (true) {
             int selectedVehicle = -1;
             int maxViolation = 0;
@@ -370,16 +383,9 @@ public class Solver {
                                 - distance[candidate][candidateNext] - distance[candidate][candidatePrev]
                                 + distance[candidatePrev][node] + distance[candidateNext][node]
                                 + distance[next][candidate] + distance[prev][candidate];
-                        if (node >= demand.length || node < 0) {
-                            System.out.println("ljl");
-                        }
-                        if (candidate >= demand.length || candidate < 0) {
-                            System.out.println("ljl");
-                        }
-                        if (j >= violation.length || j < 0) {
-                            System.out.println("ljl");
-                        }
-                        violationImprovement = Math.max(maxViolation, 0) + Math.max(violation[j], 0) - Math.max(maxViolation - demand[node] + demand[candidate], 0) - Math.max(violation[i] - demand[candidate] + demand[node], 0);
+                        violationImprovement = Math.max(maxViolation, 0) + Math.max(violation[j], 0)
+                                - Math.max(maxViolation - demand[node] + demand[candidate], 0)
+                                - Math.max(violation[j] - demand[candidate] + demand[node], 0);
                         float score = violationImprovement / averageDemand
                                 - u * distancePenalty / distantLength;
                         if (score > maxScore) {
@@ -393,6 +399,7 @@ public class Solver {
                 }
             }
 
+//            System.out.println(maxScore);
             if (maxScore == 0) {
                 u *= 0.9;
             }
@@ -413,7 +420,6 @@ public class Solver {
         }
 
         prepareSolution();
-
     }
 
     private static void kMeans() {
@@ -464,7 +470,7 @@ public class Solver {
                 diff += length(pos, centroids[i]);
                 centroids[i] = pos;
             }
-            System.out.println("diff = " + diff);
+//            System.out.println("diff = " + diff);
             if (diff < 0.01) {
                 break;
             }
@@ -483,7 +489,7 @@ public class Solver {
                 fileName = arg.substring(6);
             } 
         }
-        fileName = "./data/vrp_16_3_1";
+//        fileName = "./data/vrp_421_41_1";
         if(fileName == null)
             return;
         

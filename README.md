@@ -79,7 +79,7 @@ I did get inspirations from this problem shown below.
 
 I noticed that some customers are somewhat *clustered* to some extent. So I cannot help considering using a k-means algorithm to find these potential clusters of data. Because each vehicle will visit the depot, I modified the algorithm and offsetted the centroid of each cluster by always adding the depot's position to the sum of customer positions of that cluster. The effectiveness of this modification can be seen below.
 
-![](./images/vrp2.png) ![](./images/vrp3.png)
+![](./images/vrp2.png)
 
 This works pretty well! And this first step helps us preserve the **geographic local structure** of the data.
 
@@ -103,4 +103,4 @@ In the formula, u is used to scale the contribution of the distance penalty to t
 
 Honestly I did not expect this works but it actually does! Even though the solution is not perfect, it can be got very quickly. This also marks the completion of my "Discrete Optimization" on Coursera. It's not easy, but is worth it!
 
-![](./images/vrp4.JPG)
+![](./images/vrp3.JPG)

@@ -2,6 +2,8 @@
 
 This repo contains solutions for 5 homework assignments of ["Discrete Optimization" on Coursera by Professor Pascal Van Hentenryck](https://www.coursera.org/learn/discrete-optimization). The implementation of the solver is written in Java, though the course itself uses Python to submit the solution.
 
+The visualization of the last four problems can be found here: https://discreteoptimization.github.io/.
+
 ## Table of contents
 1. [Knapsack](#Chapter1)
 2. [Coloring](#Chapter2)

@@ -17,7 +17,7 @@ This problem is non-trivial. Even if you can solve it using dynamic programming,
 
 First, we sort the items by "value per weight". This pushes our solver closer to the global optimum, which will generate a useful **bounding** at an early stage. It also makes it easier for us to compute the bounding.
 
-The bounding here means the largest possible value we can get by seleting a subset of the items, even with some relaxation of the condition. Thus the bounding is the upper bound of the value we can get under a certain configuration, but not the supremum of that. Here when we are computing the bounding, we assume we can get a fraction of each item. In fact, using a greedy strategy, only the item with the lowest "value per weight" will be chosen partially.
+The bounding here means the largest possible value we can get by seleting a subset of the items, even with some relaxation of the condition. Thus the bounding is the upper bound of the value we can get under a certain configuration, but not the supremum of that. Here when we are computing the bounding, we assume we can get a fraction of each item. In fact, using a greedy strategy, only the last item we would like to push in will be chosen partially.
 
 Then, we begin searching the solution space. This process is similar to seaching a tree. At each node, we determine whether or not to add the item to the knapsack. When the current bounding is worse than the best solution we get so far, we prune the tree and backtrack. Below is an example showing the process of the search.
 
@@ -71,7 +71,7 @@ When the input scale is large, I will begin with a greedy solution and then refi
 ## Vehicle Routing
 [Description](./vrp/handout.pdf)
 
-I scored 45 out of 60. This problem is very tricky, it's like that you get tangled under the constraints and can hardly move forward. Ultimately I just came up with a method which produces good solutions but not perfect ones. However, this method runs quickly and generates solutions within a minute.
+I scored 45 out of 60. This problem is very tricky, it's like that you get tangled under the constraints and can hardly move forward. Ultimately I just came up with a method which produces good solutions but not perfect ones. However, this method runs quickly and generates a solution within seconds.
 
 I did get inspirations from this problem shown below.
 
@@ -85,9 +85,9 @@ This works pretty well! And this first step helps us preserve the **geographic l
 
 Now that we have an initial state of our solver, we will need to consider two things, which is very tricky to address.
 
-The first is that we will need to break the violations, otherwise the solution will be useless.
+    1. The first is that we will need to break the violations, otherwise the solution will be useless.
 
-The second is that we want to reduce the distance that our vehicles need to travel to visit each customer.
+    2. The second is that we want to reduce the distance that our vehicles need to travel to visit each customer.
 
 It is very hard to say which one should be done first, or how should we iterate through this process until we find a good solution.
 
@@ -101,6 +101,6 @@ score = violationImprovement / averageDemand - u * distancePenalty / distantLeng
 
 In the formula, u is used to scale the contribution of the distance penalty to the score of that operation. If we cannot find positive score, it means we have to compromise longer travel distance to make the solution feasible. So if that happens, the algorithm reduces u gradually.
 
-Honestly I did not expect this works but it actually does! Even though the solution is not perfect, it can be got very quickly. This also marks the completion of my "Discrete Optimization" on Coursera. It's not easy, but is worth it!
+Honestly I did not expect this works but it actually does! Even though the solution is not perfect, it can be got very quickly. This also marks the completion of my "Discrete Optimization" on Coursera. It's not easy, but is worth it.
 
 ![](./images/vrp3.JPG)
